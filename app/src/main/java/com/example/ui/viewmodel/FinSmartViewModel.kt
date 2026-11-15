@@ -9,7 +9,7 @@ import com.example.data.ai.AiImageResult
 import com.example.data.ai.AiRepository
 import com.example.data.ai.AiTextResult
 import com.example.data.ai.ImageSizeOption
-import com.example.data.ai.PlaceholderAiRepository
+import com.example.data.ai.LiveGeminiAiRepository
 import com.example.data.local.FinSmartDatabase
 import com.example.data.local.TransactionRepository
 import com.example.domain.model.CategoryBreakdownItem
@@ -63,7 +63,7 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
         dao = FinSmartDatabase.getInstance(application).transactionDao(),
         context = application
     )
-    private val aiRepository: AiRepository = PlaceholderAiRepository()
+    private val aiRepository: AiRepository = LiveGeminiAiRepository()
 
     private val _selectedYearMonth = MutableStateFlow("2026-11")
     private val _advisorSliderPercent = MutableStateFlow(30)
@@ -78,8 +78,8 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
             AiChatMessage(
                 id = "welcome",
                 isUser = false,
-                text = "Halo! Saya Asisten Keuangan Pelajar FinSmart Edu. Tanyakan strategi hemat uang jajan, evaluasi pengeluaranmu bulan ini, atau simulasi target tabungan. (Mode contoh lokal — aktifkan Firebase untuk terhubung ke Gemini secara langsung.)",
-                isPlaceholder = true,
+                text = "Halo! Saya Asisten AI Keuangan FinSmart Edu (Gemini). Tanyakan strategi hemat uang jajan, evaluasi pengeluaranmu bulan ini, atau simulasi target tabunganmu!",
+                isPlaceholder = false,
                 roleLabel = AiChatRolePreset.GENERAL_COACH.title
             )
         )
@@ -199,10 +199,22 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
         val trimmed = prompt.trim()
         if (trimmed.isEmpty() || _isChatLoading.value) return
         val currentState = uiState.value
-        val contextSummary = "Bulan ${CurrencyFormatter.formatYearMonthFull(currentState.selectedYearMonth)}: " +
-            "Pemasukan ${CurrencyFormatter.formatRupiah(currentState.monthlyIncome)}, " +
-            "Pengeluaran ${CurrencyFormatter.formatRupiah(currentState.monthlyExpense)}, " +
-            "Sisa Saldo ${CurrencyFormatter.formatRupiah(currentState.monthlyBalance)}"
+        val categoryDetails = if (currentState.categoryBreakdown.isNotEmpty()) {
+            currentState.categoryBreakdown.joinToString("; ") { item ->
+                "${item.category.name}: ${CurrencyFormatter.formatRupiah(item.totalAmount)} (${
+                    String.format(java.util.Locale.US, "%.1f%%", item.percentageOfExpense)
+                })"
+            }
+        } else {
+            "Belum ada pengeluaran tercatat"
+        }
+        val contextSummary = buildString {
+            appendLine("- Periode Aktif: ${CurrencyFormatter.formatYearMonthFull(currentState.selectedYearMonth)}")
+            appendLine("- Total Pemasukan: ${CurrencyFormatter.formatRupiah(currentState.monthlyIncome)}")
+            appendLine("- Total Pengeluaran: ${CurrencyFormatter.formatRupiah(currentState.monthlyExpense)}")
+            appendLine("- Sisa Saldo / Tabungan: ${CurrencyFormatter.formatRupiah(currentState.monthlyBalance)}")
+            append("- Rincian Pengeluaran per Kategori: $categoryDetails")
+        }
 
         val userMsg = AiChatMessage(
             id = "u_${System.currentTimeMillis()}",
@@ -226,7 +238,7 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
                 id = "m_${System.currentTimeMillis()}",
                 isUser = false,
                 text = replyText,
-                isPlaceholder = true,
+                isPlaceholder = !aiRepository.isLiveFirebaseConnected,
                 roleLabel = _chatRole.value.title
             )
             _isChatLoading.value = false
