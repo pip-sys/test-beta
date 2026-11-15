@@ -29,6 +29,14 @@ jobs:
         mkdir -p app
         cp debug.keystore app/debug.keystore || true
 
+    - name: Setup .env from GitHub Secrets
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        if [ -n "$GEMINI_API_KEY" ]; then
+          echo "GEMINI_API_KEY=$GEMINI_API_KEY" > .env
+        fi
+
     - name: Generate Gradle Wrapper & Build APK
       run: |
         # Jika gradlew belum ada, generate otomatis menggunakan gradle di runner

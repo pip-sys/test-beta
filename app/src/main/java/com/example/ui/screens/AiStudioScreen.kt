@@ -296,6 +296,7 @@ private fun ChatbotTabContent(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             listOf(
+                "Catat makan siang 25rb",
                 "Cara hemat uang jajan?",
                 "Evaluasi saldo bulan ini",
                 "Tips capai target tabungan"

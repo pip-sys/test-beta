@@ -198,23 +198,6 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
     fun sendChatMessage(prompt: String) {
         val trimmed = prompt.trim()
         if (trimmed.isEmpty() || _isChatLoading.value) return
-        val currentState = uiState.value
-        val categoryDetails = if (currentState.categoryBreakdown.isNotEmpty()) {
-            currentState.categoryBreakdown.joinToString("; ") { item ->
-                "${item.category.name}: ${CurrencyFormatter.formatRupiah(item.totalAmount)} (${
-                    String.format(java.util.Locale.US, "%.1f%%", item.percentageOfExpense)
-                })"
-            }
-        } else {
-            "Belum ada pengeluaran tercatat"
-        }
-        val contextSummary = buildString {
-            appendLine("- Periode Aktif: ${CurrencyFormatter.formatYearMonthFull(currentState.selectedYearMonth)}")
-            appendLine("- Total Pemasukan: ${CurrencyFormatter.formatRupiah(currentState.monthlyIncome)}")
-            appendLine("- Total Pengeluaran: ${CurrencyFormatter.formatRupiah(currentState.monthlyExpense)}")
-            appendLine("- Sisa Saldo / Tabungan: ${CurrencyFormatter.formatRupiah(currentState.monthlyBalance)}")
-            append("- Rincian Pengeluaran per Kategori: $categoryDetails")
-        }
 
         val userMsg = AiChatMessage(
             id = "u_${System.currentTimeMillis()}",
@@ -225,6 +208,38 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
         _isChatLoading.value = true
 
         viewModelScope.launch {
+            // Cek apakah pesan pengguna adalah perintah mencatat transaksi dengan nominal (misal: "catat makan siang 25rb")
+            val recordedReply = tryParseAndRecordChatTransaction(trimmed)
+            if (recordedReply != null) {
+                _chatMessages.value = _chatMessages.value + AiChatMessage(
+                    id = "m_${System.currentTimeMillis()}",
+                    isUser = false,
+                    text = recordedReply,
+                    isPlaceholder = false,
+                    roleLabel = _chatRole.value.title
+                )
+                _isChatLoading.value = false
+                return@launch
+            }
+
+            val currentState = uiState.value
+            val categoryDetails = if (currentState.categoryBreakdown.isNotEmpty()) {
+                currentState.categoryBreakdown.joinToString("; ") { item ->
+                    "${item.category.name}: ${CurrencyFormatter.formatRupiah(item.totalAmount)} (${
+                        String.format(java.util.Locale.US, "%.1f%%", item.percentageOfExpense)
+                    })"
+                }
+            } else {
+                "Belum ada pengeluaran tercatat"
+            }
+            val contextSummary = buildString {
+                appendLine("- Periode Aktif: ${CurrencyFormatter.formatYearMonthFull(currentState.selectedYearMonth)}")
+                appendLine("- Total Pemasukan: ${CurrencyFormatter.formatRupiah(currentState.monthlyIncome)}")
+                appendLine("- Total Pengeluaran: ${CurrencyFormatter.formatRupiah(currentState.monthlyExpense)}")
+                appendLine("- Sisa Saldo / Tabungan: ${CurrencyFormatter.formatRupiah(currentState.monthlyBalance)}")
+                append("- Rincian Pengeluaran per Kategori: $categoryDetails")
+            }
+
             val result = aiRepository.sendChatMessage(
                 history = _chatMessages.value,
                 userMessage = trimmed,
@@ -242,6 +257,119 @@ class FinSmartViewModel(application: Application) : AndroidViewModel(application
                 roleLabel = _chatRole.value.title
             )
             _isChatLoading.value = false
+        }
+    }
+
+    private suspend fun tryParseAndRecordChatTransaction(message: String): String? {
+        val lower = message.lowercase()
+        val hasRecordIntent = listOf("catat", "tambah", "input", "simpan", "beli", "bayar", "jajan").any {
+            lower.contains(it)
+        }
+        if (!hasRecordIntent) return null
+
+        // Cari pola angka nominal seperti: 25rb, 25ribu, 25k, 1.5jt, 1,5juta, 25.000, 25000
+        val amountRegex = Regex("""(\d+(?:[.,]\d+)?)\s*(jt|juta|rb|ribu|k)?""", RegexOption.IGNORE_CASE)
+        val matches = amountRegex.findAll(message).toList()
+        if (matches.isEmpty()) return null
+
+        // Ambil kandidat nominal terbesar yang valid (>= 500)
+        var parsedAmount = 0L
+        var matchedTokenRange: IntRange? = null
+        for (m in matches) {
+            val rawNum = m.groupValues[1]
+            val unit = m.groupValues[2].lowercase()
+            val value = when (unit) {
+                "jt", "juta" -> {
+                    val d = rawNum.replace(',', '.').toDoubleOrNull() ?: 0.0
+                    (d * 1_000_000).toLong()
+                }
+                "rb", "ribu", "k" -> {
+                    val d = rawNum.replace(',', '.').toDoubleOrNull() ?: 0.0
+                    (d * 1_000).toLong()
+                }
+                else -> {
+                    val digitsOnly = rawNum.replace(".", "").replace(",", "")
+                    digitsOnly.toLongOrNull() ?: 0L
+                }
+            }
+            if (value >= 500L && value >= parsedAmount) {
+                parsedAmount = value
+                matchedTokenRange = m.range
+            }
+        }
+
+        if (parsedAmount < 500L || matchedTokenRange == null) return null
+
+        val isIncome = listOf("pemasukan", "masuk", "uang saku", "gaji", "beasiswa", "freelance", "bonus", "hadiah")
+            .any { lower.contains(it) }
+        val txType = if (isIncome) TransactionType.INCOME else TransactionType.EXPENSE
+
+        val category = if (isIncome) {
+            when {
+                lower.contains("beasiswa") || lower.contains("lomba") || lower.contains("prestasi") -> "Beasiswa/Prestasi"
+                lower.contains("freelance") || lower.contains("part-time") || lower.contains("jasa") || lower.contains("honor") -> "Freelance/Part-time"
+                lower.contains("hadiah") || lower.contains("bonus") -> "Hadiah/Lainnya"
+                else -> "Uang Saku"
+            }
+        } else {
+            when {
+                listOf("kopi", "nongkrong", "bioskop", "nonton", "kafe", "cafe", "hiburan", "game", "futsal", "karaoke").any { lower.contains(it) } ->
+                    "Nongkrong & Hiburan"
+                listOf("makan", "jajan", "bakso", "mie", "nasi", "kantin", "warteg", "boba", "camilan", "snack", "sarapan", "minum").any { lower.contains(it) } ->
+                    "Makan & Jajan"
+                listOf("bensin", "pertalite", "pertamax", "parkir", "ojek", "gojek", "grab", "transport", "angkot", "servis", "motor").any { lower.contains(it) } ->
+                    "Transportasi & Bensin"
+                listOf("kuota", "internet", "pulsa", "wifi", "spotify", "netflix", "canva", "langganan", "data").any { lower.contains(it) } ->
+                    "Kuota & Langganan"
+                listOf("buku", "tugas", "print", "cetak", "fotokopi", "jilid", "sekolah", "alat tulis", "kertas", "pulpen").any { lower.contains(it) } ->
+                    "Kebutuhan Sekolah/Tugas"
+                listOf("belanja", "shopee", "tokopedia", "tiktok", "checkout", "baju", "sepatu", "jaket", "tas", "online", "marketplace").any { lower.contains(it) } ->
+                    "Belanja Online"
+                else -> "Lainnya"
+            }
+        }
+
+        // Bersihkan judul transaksi dari kata perintah dan nominal
+        val withoutAmount = message.removeRange(matchedTokenRange)
+        val cleanedTitle = withoutAmount
+            .replace(Regex("""(?i)\b(tolong|catat|catatkan|tambah|tambahkan|input|simpan|pengeluaran|pemasukan|bulan ini|sebesar|senilai|rp)\b"""), " ")
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+            .trim('-', ':', ',', '.')
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
+            .ifBlank { if (isIncome) "Pemasukan $category" else "Pengeluaran $category" }
+
+        val activeYm = _selectedYearMonth.value
+        val dateIso = "$activeYm-14"
+
+        repository.addTransaction(
+            FinancialTransaction(
+                title = cleanedTitle,
+                amount = parsedAmount,
+                type = txType,
+                category = category,
+                dateIso = dateIso,
+                yearMonth = activeYm
+            )
+        )
+
+        val currentState = uiState.value
+        val newIncome = currentState.monthlyIncome + (if (isIncome) parsedAmount else 0L)
+        val newExpense = currentState.monthlyExpense + (if (!isIncome) parsedAmount else 0L)
+        val newBalance = newIncome - newExpense
+
+        return buildString {
+            appendLine("✅ Transaksi berhasil dicatat ke ${CurrencyFormatter.formatYearMonthFull(activeYm)}!")
+            appendLine()
+            appendLine("• Nama Transaksi: $cleanedTitle")
+            appendLine("• Jenis: ${txType.label}")
+            appendLine("• Kategori: $category")
+            appendLine("• Nominal: ${CurrencyFormatter.formatRupiah(parsedAmount)}")
+            appendLine()
+            appendLine("📊 Update Ringkasan Bulan Ini:")
+            appendLine("• Total Pemasukan: ${CurrencyFormatter.formatRupiah(newIncome)}")
+            appendLine("• Total Pengeluaran: ${CurrencyFormatter.formatRupiah(newExpense)}")
+            append("• Sisa Saldo Baru: ${CurrencyFormatter.formatRupiah(newBalance)}")
         }
     }
 
