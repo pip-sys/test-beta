@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">FinSmart Edu</string>
+    <string name="app_subtitle">Tugas Akhir Pencatat Keuangan Pintar</string>
+    <string name="nav_dashboard">Ringkasan</string>
+    <string name="nav_transactions">Transaksi</string>
+    <string name="nav_advisor">Saran Hemat</string>
+    <string name="nav_ai">Asisten AI</string>
+    <string name="btn_load_demo">Muat Data Contoh (Demo 6 Bulan)</string>
+    <string name="btn_reset_data">Reset Data</string>
+    <string name="label_total_income">Total Pemasukan Bulan Ini</string>
+    <string name="label_total_expense">Total Pengeluaran Bulan Ini</string>
+    <string name="label_balance">Sisa Saldo / Tabungan</string>
+    <string name="ai_firebase_notice">Mode contoh (placeholder): Fitur AI live Gemini &amp; pembuatan gambar memerlukan Firebase.</string>
+</resources>

@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinSmart Edu — Aplikasi Web Pencatat Keuangan Pintar (Tugas Akhir)</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Outfit', 'sans-serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            slateBg: '#F8FAFC',
+            emeraldBrand: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              500: '#10B981',
+              600: '#059669',
+              700: '#047857',
+            },
+            coralBrand: {
+              50: '#FFF1F2',
+              100: '#FFE4E6',
+              500: '#F43F5E',
+              600: '#E11D48',
+              700: '#BE123C',
+            },
+            skyBrand: {
+              50: '#F0F9FF',
+              100: '#E0F2FE',
+              500: '#0EA5E9',
+              600: '#0284C7',
+              700: '#0369A1',
+            },
+            amberBrand: {
+              50: '#FFFBEB',
+              100: '#FEF3C7',
+              500: '#F59E0B',
+              600: '#D97706',
+              700: '#B45309',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body {
+      background-color: #F8FAFC;
+      color: #0F172A;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    h1, h2, h3, h4, .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    .soft-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
+      border-radius: 1.25rem;
+    }
+    input[type="range"] {
+      accent-color: #0284C7;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    /* Print / PDF Stylesheet */
+    @media print {
+      body {
+        background: #FFFFFF !important;
+        color: #0F172A !important;
+        font-size: 11pt;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .soft-card {
+        box-shadow: none !important;
+        border: 1px solid #CBD5E1 !important;
+        break-inside: avoid;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      canvas {
+        max-height: 240px !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen antialiased selection:bg-emerald-100 selection:text-emerald-900">
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
+
+  <!-- Print Only Formal Header -->
+  <div class="hidden print-only border-b-2 border-slate-800 pb-4 mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold font-display text-slate-900">LAPORAN KEUANGAN BULANAN — FINSMART EDU</h1>
+        <p class="text-sm text-slate-600">Aplikasi Web Pencatat Keuangan Pintar &amp; Analisis Penghematan (Lampiran Tugas Akhir Sekolah)</p>
+      </div>
+      <div class="text-right text-xs text-slate-500">
+        <p id="printPeriodLabel" class="font-semibold text-slate-800 text-sm">Periode: November 2026</p>
+        <p id="printTimestamp">Dicetak pada: -</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-sky-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5Zm-6 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0Z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 9h5m-5 4h3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-bold text-xl tracking-tight text-slate-900">FinSmart <span class="text-emerald-600">Edu</span></span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Web Tugas Akhir</span>
+          </div>
+          <p class="text-xs text-slate-500">Pencatat Keuangan Berkala, Kurva Bulanan &amp; Smart Saving Advisor</p>
+        </div>
+      </div>
+
+      <!-- Action Toolbar: Demo, Export CSV, Print PDF, Reset -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="loadDemoData()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition shadow-sm">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+          </svg>
+          Muat Demo 6 Bulan
+        </button>
+
+        <button onclick="exportToExcelCSV()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition shadow-sm">
+          <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          </svg>
+          Unduh Excel/CSV
+        </button>
+
+        <button onclick="printReportPDF()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition shadow-sm">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Cetak / Simpan PDF
+        </button>
+
+        <button onclick="downloadStandaloneHTML()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition shadow-sm" title="Unduh file aplikasi HTML ini untuk dijalankan offline">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Simpan File HTML
+        </button>
+
+        <button onclick="resetAllData()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition">
+          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Reset Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 1. Pemilih Periode Bulan Berkala (Juni 2026 - Desember 2026) -->
+    <section class="soft-card p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Pencatatan Berkala Bulanan</span>
+          <h2 class="text-lg font-bold font-display text-slate-900">Pilih Periode Bulan Laporan</h2>
+        </div>
+      </div>
+
+      <!-- Quick Month Pills + Select Dropdown -->
+      <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+        <div class="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button onclick="stepMonth(-1)" class="p-2 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 transition" title="Bulan Sebelumnya">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <select id="monthSelect" onchange="handleMonthChange(this.value)" class="bg-transparent font-display font-bold text-sm sm:text-base text-slate-900 px-3 py-1.5 focus:outline-none cursor-pointer">
+            <option value="2026-06">Juni 2026</option>
+            <option value="2026-07">Juli 2026</option>
+            <option value="2026-08">Agustus 2026</option>
+            <option value="2026-09">September 2026</option>
+            <option value="2026-10">Oktober 2026</option>
+            <option value="2026-11" selected>November 2026</option>
+            <option value="2026-12">Desember 2026</option>
+          </select>
+          <button onclick="stepMonth(1)" class="p-2 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 transition" title="Bulan Berikutnya">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="monthPillsContainer" class="hidden xl:flex items-center gap-1"></div>
+      </div>
+    </section>
+
+    <!-- 3 Kartu Ringkasan Utama -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      <!-- Card 1: Total Pemasukan Bulan Ini -->
+      <div class="soft-card p-5 relative overflow-hidden border-l-4 border-l-emerald-500">
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">Pemasukan Bulan Ini</span>
+            <h3 id="summaryIncome" class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-3">Rp 0</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span id="summaryIncomeCount">0 transaksi masuk</span>
+          <span id="summaryIncomeTrend" class="font-semibold text-emerald-600">Periode berjalan</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Total Pengeluaran Bulan Ini -->
+      <div class="soft-card p-5 relative overflow-hidden border-l-4 border-l-rose-500">
+        <div class="flex items-start justify-between">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">Pengeluaran Bulan Ini</span>
+            <h3 id="summaryExpense" class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-3">Rp 0</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span id="summaryExpenseCount">0 transaksi keluar</span>
+          <span id="summaryExpenseTopCat" class="font-semibold text-rose-600 truncate max-w-[170px]">Terbesar: -</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Sisa Saldo & Rasio Tabungan (%) -->
+      <div class="soft-card p-5 relative overflow-hidden border-l-4 border-l-sky-500 bg-gradient-to-br from-white via-white to-sky-50/50">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold uppercase tracking-wider text-sky-700 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200">Sisa Saldo / Tabungan</span>
+              <span id="summarySavingsBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">Rasio 0%</span>
+            </div>
+            <h3 id="summaryBalance" class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 mt-3">Rp 0</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div id="savingsProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+            <span id="summaryHealthStatus">Status Keuangan: Belum Ada Data</span>
+            <span class="font-medium text-slate-700">Target Ideal: &ge; 20%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Visualisasi Kurva Bulanan & Grafik (Chart.js) -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- Grafik 1: Smooth Line/Area Curve (Tren Pemasukan vs Pengeluaran) -->
+      <div class="soft-card p-5 lg:col-span-7 flex flex-col justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Grafik 1 • Kurva Tren Berkala</span>
+            <h3 class="text-lg font-bold font-display text-slate-900">Kurva Perbandingan Pemasukan vs Pengeluaran</h3>
+            <p class="text-xs text-slate-500">Tren berkala tiap bulan (Juni 2026 – Desember 2026)</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-semibold">
+            <span class="inline-flex items-center gap-1.5 text-emerald-700">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Pemasukan
+            </span>
+            <span class="inline-flex items-center gap-1.5 text-rose-600">
+              <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Pengeluaran
+            </span>
+          </div>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full">
+          <canvas id="trendLineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Grafik 2: Doughnut Chart (Rincian Pengeluaran Habis di Mana) -->
+      <div class="soft-card p-5 lg:col-span-5 flex flex-col justify-between">
+        <div class="mb-4">
+          <span class="text-xs font-semibold uppercase tracking-wider text-rose-600">Grafik 2 • Distribusi Kategori</span>
+          <h3 class="text-lg font-bold font-display text-slate-900">Visualisasi Uang Habis dari Mana Saja</h3>
+          <p id="doughnutSubtitle" class="text-xs text-slate-500">Persentase porsi pengeluaran bulan berjalan</p>
+        </div>
+        <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+          <canvas id="expenseDoughnutChart"></canvas>
+          <div id="doughnutEmptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center p-4 bg-slate-50/80 rounded-2xl">
+            <p class="text-sm font-semibold text-slate-700">Belum Ada Pengeluaran Bulan Ini</p>
+            <p class="text-xs text-slate-500 mt-1">Tambahkan pengeluaran atau klik "Muat Demo 6 Bulan" di bagian atas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Fitur "Saran Penghematan Pintar" (Smart Saving Advisor) -->
+    <section class="soft-card overflow-hidden border-2 border-sky-200/80">
+      <div class="bg-gradient-to-r from-sky-50 via-amber-50/70 to-emerald-50/60 p-5 sm:p-6 border-b border-sky-200/60">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-amber-500 text-white flex items-center justify-center shadow-md shadow-sky-500/20">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">Smart Saving Advisor</span>
+                <span class="text-xs font-semibold text-sky-700">Analisis Otomatis Pengeluaran Non-Esensial</span>
+              </div>
+              <h2 class="text-xl font-extrabold font-display text-slate-900 mt-1">Saran Penghematan Pintar &amp; Simulasi Target Hemat</h2>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <span class="text-xs text-slate-500 block">Terdeteksi Pos Non-Esensial Terboros:</span>
+            <span id="advisorTopLeakBadge" class="inline-flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advisor Body -->
+      <div id="advisorContentBox" class="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <!-- Left Recommendation Narrative -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+            <div class="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider">
+              <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              Rekomendasi Pemotongan Prioritas
+            </div>
+            <p id="advisorHeadlineText" class="text-base sm:text-lg font-bold font-display text-slate-900 mt-1.5">
+              Belum ada data pengeluaran untuk dianalisis.
+            </p>
+            <p id="advisorActionTip" class="text-xs sm:text-sm text-slate-600 mt-1">
+              Tambahkan transaksi pengeluaran agar sistem dapat mendeteksi kategori non-esensial terbesar secara otomatis.
+            </p>
+          </div>
+
+          <!-- Category Selector Pills for Simulation -->
+          <div class="no-print">
+            <label class="block text-xs font-semibold text-slate-500 mb-2">Pilih Pos Kategori yang Ingin Disimulasikan Dipotong:</label>
+            <div id="advisorCategoryPills" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- Interactive Slider (10% - 60%) -->
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
+            <div class="flex items-center justify-between">
+              <label for="savingSlider" class="text-xs sm:text-sm font-bold text-slate-700">
+                Geser Target Pemotongan Kategori (<span id="sliderTargetCatLabel" class="text-sky-700">-</span>):
+              </label>
+              <span id="sliderValueBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-sky-600 text-white shadow-sm">
+                Potong 30%
+              </span>
+            </div>
+
+            <input
+              id="savingSlider"
+              type="range"
+              min="10"
+              max="60"
+              step="5"
+              value="30"
+              oninput="handleSliderChange(this.value)"
+              class="w-full h-2.5 bg-sky-100 rounded-lg cursor-pointer no-print"
+            />
+
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span>10% (Ringan)</span>
+              <span>25% (Moderat)</span>
+              <span class="text-sky-600">30% (Rekomendasi)</span>
+              <span>45% (Agresif)</span>
+              <span class="text-amber-600">60% (Maksimal)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Concrete Simulation Impact Cards -->
+        <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3.5">
+          <div class="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-emerald-800">Uang Berhasil Diselamatkan / Bulan</span>
+              <p id="simSavedMonthly" class="text-2xl font-extrabold font-display text-emerald-700 mt-0.5">Rp 0</p>
+              <span id="simSavedSixMonths" class="text-[11px] font-medium text-emerald-700">Akumulasi 6 Bulan: Rp 0</span>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-sky-50/90 border border-sky-200 flex items-center justify-between">
+            <div>
+              <span class="text-xs font-semibold text-sky-800">Proyeksi Saldo Akhir Bulan Baru</span>
+              <p id="simNewBalance" class="text-xl font-extrabold font-display text-sky-800 mt-0.5">Rp 0</p>
+              <span id="simNewSavingsRate" class="text-[11px] font-semibold text-sky-700">Rasio Tabungan Naik: 0% &rarr; 0%</span>
+            </div>
+            <div class="w-11 h-11 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Input Transaksi & Pelacak "Pengeluaran Habis dari Mana" -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Form Input Transaksi (Left 5 Columns) -->
+      <div class="soft-card p-5 sm:p-6 lg:col-span-5 no-print">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Input Data Keuangan</span>
+            <h3 class="text-lg font-bold font-display text-slate-900">Catat Transaksi Baru</h3>
+          </div>
+          <span class="text-xs text-slate-400">Tersimpan Otomatis</span>
+        </div>
+
+        <form id="transactionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+          <!-- Jenis Transaksi Toggle -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Jenis Transaksi</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                id="btnTypeExpense"
+                onclick="setTransactionType('EXPENSE')"
+                class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-sm"
+              >
+                <span>Pengeluaran (-)</span>
+              </button>
+              <button
+                type="button"
+                id="btnTypeIncome"
+                onclick="setTransactionType('INCOME')"
+                class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900"
+              >
+                <span>Pemasukan (+)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Nama / Keterangan Transaksi -->
+          <div>
+            <label for="txTitle" class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Nama Transaksi</label>
+            <input
+              id="txTitle"
+              type="text"
+              required
+              placeholder="Contoh: Kopi Susu & Camilan Sore"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+          </div>
+
+          <!-- Nominal & Tanggal -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="txAmount" class="block text-xs font-semibold text-slate-600 mb-1">Nominal (Rp)</label>
+              <input
+                id="txAmount"
+                type="number"
+                min="500"
+                step="500"
+                required
+                placeholder="50000"
+                oninput="updateAmountPreview(this.value)"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              <p id="amountPreviewText" class="text-[11px] font-medium text-slate-400 mt-1">Format: Rp 0</p>
+            </div>
+
+            <div>
+              <label for="txDate" class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Transaksi</label>
+              <input
+                id="txDate"
+                type="date"
+                required
+                value="2026-11-14"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- Kategori Spesifik -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="txCategory" class="block text-xs font-semibold text-slate-600">Kategori Spesifik</label>
+              <span id="categoryNatureTag" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Bisa Dihemat</span>
+            </div>
+            <select
+              id="txCategory"
+              onchange="updateCategoryTag()"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            ></select>
+          </div>
+
+          <button
+            type="submit"
+            id="submitTxBtn"
+            class="w-full py-3 px-4 rounded-xl font-display font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 transition shadow-md shadow-rose-500/20 flex items-center justify-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span id="submitTxBtnLabel">Simpan Pengeluaran</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Daftar Urutan Porsi Pengeluaran ("Uangmu Paling Banyak Habis di...") (Right 7 Columns) -->
+      <div class="soft-card p-5 sm:p-6 lg:col-span-7">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-rose-600">Pelacak Pengeluaran Habis dari Mana</span>
+            <h3 class="text-lg font-bold font-display text-slate-900">Urutan Porsi Pengeluaran Bulan Ini</h3>
+          </div>
+          <div class="flex items-center gap-2 text-[11px] font-semibold">
+            <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">Bisa Dihemat (Non-Esensial)</span>
+            <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Kebutuhan Pokok</span>
+          </div>
+        </div>
+
+        <div id="rankedCategoryList" class="space-y-3.5"></div>
+      </div>
+    </section>
+
+    <!-- Tabel Riwayat Transaksi Bulanan (Bisa Dicari & Dihapus) -->
+    <section class="soft-card p-5 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-sky-700">Daftar Riwayat Transaksi</span>
+          <h3 class="text-lg font-bold font-display text-slate-900">
+            Riwayat Transaksi Bulan <span id="tableMonthLabel" class="text-emerald-600">November 2026</span>
+          </h3>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-wrap items-center gap-2 no-print">
+          <div class="relative">
+            <input
+              id="searchInput"
+              type="text"
+              oninput="renderAll()"
+              placeholder="Cari keterangan atau kategori..."
+              class="pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 w-56 sm:w-64"
+            />
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+
+          <select
+            id="typeFilterSelect"
+            onchange="renderAll()"
+            class="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="ALL">Semua Jenis</option>
+            <option value="EXPENSE">Hanya Pengeluaran</option>
+            <option value="INCOME">Hanya Pemasukan</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50/80">
+              <th class="py-3 px-4 rounded-tl-xl">Tanggal</th>
+              <th class="py-3 px-4">Keterangan Transaksi</th>
+              <th class="py-3 px-4">Kategori &amp; Sifat</th>
+              <th class="py-3 px-4 text-center">Porsi Keluar</th>
+              <th class="py-3 px-4 text-right">Nominal (Rp)</th>
+              <th class="py-3 px-4 text-center rounded-tr-xl no-print">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer Tugas Akhir -->
+    <footer class="text-center text-xs text-slate-400 py-6 border-t border-slate-200/70">
+      <p class="font-semibold text-slate-600">FinSmart Edu — Aplikasi Web Pencatat Keuangan Pintar &amp; Analisis Penghematan Pelajar</p>
+      <p class="mt-1">Karya Tugas Akhir Sekolah • Data Tersimpan Otomatis di Perangkat (LocalStorage) • Siap Cetak PDF &amp; Export Excel/CSV</p>
+    </footer>
+
+  </main>
+
+  <!-- Full Application JavaScript -->
+  <script>
+    const STORAGE_KEY = 'finsmart_edu_transactions_v2';
+
+    const MONTHS_2026 = [
+      { value: '2026-06', label: 'Juni 2026', short: 'Jun' },
+      { value: '2026-07', label: 'Juli 2026', short: 'Jul' },
+      { value: '2026-08', label: 'Agustus 2026', short: 'Agu' },
+      { value: '2026-09', label: 'September 2026', short: 'Sep' },
+      { value: '2026-10', label: 'Oktober 2026', short: 'Okt' },
+      { value: '2026-11', label: 'November 2026', short: 'Nov' },
+      { value: '2026-12', label: 'Desember 2026', short: 'Des' }
+    ];
+
+    const EXPENSE_CATEGORIES = [
+      {
+        name: 'Makan & Jajan',
+        color: '#F97316',
+        bgLight: '#FFF7ED',
+        textDark: '#C2410C',
+        savable: true,
+        tagLabel: 'Bisa Dihemat',
+        tip: 'Bawa bekal makanan dan botol minum sendiri minimal 3 hari seminggu untuk memangkas jajan harian.'
+      },
+      {
+        name: 'Nongkrong & Hiburan',
+        color: '#F43F5E',
+        bgLight: '#FFF1F2',
+        textDark: '#BE123C',
+        savable: true,
+        tagLabel: 'Bisa Dihemat',
+        tip: 'Batasi nongkrong di kafe maksimal 1-2 kali seminggu dan tetapkan batas anggaran hiburan bulanan.'
+      },
+      {
+        name: 'Belanja Online & Lifestyle',
+        color: '#EC4899',
+        bgLight: '#FDF2F8',
+        textDark: '#BE185D',
+        savable: true,
+        tagLabel: 'Bisa Dihemat',
+        tip: 'Terapkan aturan tunda 48 jam sebelum checkout keranjang belanja online agar terhindar dari belanja impulsif.'
+      },
+      {
+        name: 'Transportasi & Bensin',
+        color: '#0EA5E9',
+        bgLight: '#F0F9FF',
+        textDark: '#0369A1',
+        savable: false,
+        tagLabel: 'Kebutuhan Pokok',
+        tip: 'Gunakan rute paling efisien atau berangkat bersama teman searah untuk menghemat bensin mingguan.'
+      },
+      {
+        name: 'Kebutuhan Sekolah & Tugas',
+        color: '#059669',
+        bgLight: '#ECFDF5',
+        textDark: '#047857',
+        savable: false,
+        tagLabel: 'Kebutuhan Pokok',
+        tip: 'Beli alat tulis atau kertas secara grosir bersama teman sekelas agar biaya cetak dan tugas lebih hemat.'
+      },
+      {
+        name: 'Kuota & Langganan Digital',
+        color: '#6366F1',
+        bgLight: '#EEF2FF',
+        textDark: '#4338CA',
+        savable: true,
+        tagLabel: 'Bisa Dihemat',
+        tip: 'Evaluasi langganan aplikasi hiburan bulanan yang jarang dipakai dan manfaatkan Wi-Fi rumah/sekolah.'
+      },
+      {
+        name: 'Lainnya',
+        color: '#64748B',
+        bgLight: '#F1F5F9',
+        textDark: '#334155',
+        savable: false,
+        tagLabel: 'Kebutuhan Pokok',
+        tip: 'Selalu siapkan pos dana darurat kecil agar pengeluaran tak terduga tidak mengganggu tabungan utama.'
+      }
+    ];
+
+    const INCOME_CATEGORIES = [
+      { name: 'Uang Saku Bulanan', color: '#10B981', bgLight: '#ECFDF5', textDark: '#047857', savable: false, tagLabel: 'Pemasukan Rutin' },
+      { name: 'Beasiswa & Prestasi', color: '#0284C7', bgLight: '#E0F2FE', textDark: '#0369A1', savable: false, tagLabel: 'Apresiasi Pendidikan' },
+      { name: 'Freelance / Part-time', color: '#D97706', bgLight: '#FEF3C7', textDark: '#B45309', savable: false, tagLabel: 'Penghasilan Tambahan' },
+      { name: 'Hadiah & Lainnya', color: '#8B5CF6', bgLight: '#F5F3FF', textDark: '#6D28D9', savable: false, tagLabel: 'Pemasukan Lain' }
+    ];
+
+    let transactions = [];
+    let selectedMonth = '2026-11';
+    let currentFormType = 'EXPENSE';
+    let advisorSliderPercent = 30;
+    let advisorSelectedCategory = null;
+
+    let trendChartInstance = null;
+    let doughnutChartInstance = null;
+
+    function formatRupiah(amount) {
+      const num = Math.round(Number(amount) || 0);
+      const absFormatted = Math.abs(num).toLocaleString('id-ID');
+      return (num < 0 ? '-Rp ' : 'Rp ') + absFormatted;
+    }
+
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      const mIdx = Math.max(0, Math.min(11, parseInt(parts[1], 10) - 1));
+      return `${parseInt(parts[2], 10)} ${months[mIdx]} ${parts[0]}`;
+    }
+
+    function getMonthLabel(ym) {
+      const found = MONTHS_2026.find(m => m.value === ym);
+      if (found) return found.label;
+      const parts = ym.split('-');
+      const names = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      return `${names[(parseInt(parts[1], 10) || 1) - 1]} ${parts[0]}`;
+    }
+
+    function findCategoryMeta(categoryName, type) {
+      const list = type === 'INCOME' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+      return list.find(c => c.name === categoryName) || {
+        name: categoryName,
+        color: type === 'INCOME' ? '#10B981' : '#64748B',
+        bgLight: type === 'INCOME' ? '#ECFDF5' : '#F1F5F9',
+        textDark: type === 'INCOME' ? '#047857' : '#334155',
+        savable: false,
+        tagLabel: type === 'INCOME' ? 'Pemasukan' : 'Kebutuhan Pokok',
+        tip: 'Pantau pengeluaran kategori ini secara berkala setiap akhir pekan.'
+      };
+    }
+
+    function buildSixMonthDemoDataset() {
+      return [
+        // Juni 2026
+        { id: 101, title: 'Uang Saku Bulanan Juni', amount: 1500000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-06-01', yearMonth: '2026-06' },
+        { id: 102, title: 'Komisi Desain Poster OSIS', amount: 250000, type: 'INCOME', category: 'Freelance / Part-time', date: '2026-06-14', yearMonth: '2026-06' },
+        { id: 103, title: 'Kantin Sekolah & Jajan Sore', amount: 380000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-06-05', yearMonth: '2026-06' },
+        { id: 104, title: 'Nonton Bioskop & Ngopi Bareng', amount: 290000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-06-12', yearMonth: '2026-06' },
+        { id: 105, title: 'Bensin Motor & Parkir Sekolah', amount: 145000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-06-09', yearMonth: '2026-06' },
+        { id: 106, title: 'Paket Data Internet 35GB', amount: 90000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-06-03', yearMonth: '2026-06' },
+        { id: 107, title: 'Fotokopi Modul & Alat Tulis', amount: 115000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-06-15', yearMonth: '2026-06' },
+        { id: 108, title: 'Beli Case HP & Aksesoris Meja', amount: 165000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-06-21', yearMonth: '2026-06' },
+
+        // Juli 2026
+        { id: 201, title: 'Uang Saku Bulanan Juli', amount: 1550000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-07-01', yearMonth: '2026-07' },
+        { id: 202, title: 'Hadiah Juara Lomba Karya Tulis', amount: 400000, type: 'INCOME', category: 'Beasiswa & Prestasi', date: '2026-07-18', yearMonth: '2026-07' },
+        { id: 203, title: 'Jajan Harian & Minuman Boba', amount: 410000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-07-06', yearMonth: '2026-07' },
+        { id: 204, title: 'Main Futsal & Kafe Akhir Pekan', amount: 345000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-07-11', yearMonth: '2026-07' },
+        { id: 205, title: 'Bensin & Ojek Online', amount: 170000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-07-08', yearMonth: '2026-07' },
+        { id: 206, title: 'Kuota Internet & Musik Premium', amount: 115000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-07-03', yearMonth: '2026-07' },
+        { id: 207, title: 'Buku Referensi Semester Baru', amount: 195000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-07-14', yearMonth: '2026-07' },
+        { id: 208, title: 'Checkout Sepatu Olahraga Diskon', amount: 310000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-07-23', yearMonth: '2026-07' },
+
+        // Agustus 2026
+        { id: 301, title: 'Uang Saku Bulanan Agustus', amount: 1600000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-08-01', yearMonth: '2026-08' },
+        { id: 302, title: 'Freelance Edit Video Dokumentasi', amount: 350000, type: 'INCOME', category: 'Freelance / Part-time', date: '2026-08-19', yearMonth: '2026-08' },
+        { id: 303, title: 'Makan Siang Kantin & Camilan', amount: 430000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-08-07', yearMonth: '2026-08' },
+        { id: 304, title: 'Nongkrong Malam Minggu & Tiket Acara', amount: 395000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-08-15', yearMonth: '2026-08' },
+        { id: 305, title: 'Bensin & Ganti Oli Motor', amount: 205000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-08-10', yearMonth: '2026-08' },
+        { id: 306, title: 'Paket Data & Langganan Canva Pro', amount: 125000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-08-02', yearMonth: '2026-08' },
+        { id: 307, title: 'Cetak Proposal Tugas Akhir', amount: 145000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-08-21', yearMonth: '2026-08' },
+        { id: 308, title: 'Beli Jaket Hoodie Marketplace', amount: 265000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-08-25', yearMonth: '2026-08' },
+
+        // September 2026
+        { id: 401, title: 'Uang Saku Bulanan September', amount: 1600000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-09-01', yearMonth: '2026-09' },
+        { id: 402, title: 'Beasiswa Prestasi Akademik', amount: 650000, type: 'INCOME', category: 'Beasiswa & Prestasi', date: '2026-09-10', yearMonth: '2026-09' },
+        { id: 403, title: 'Makan Siang, Mie Ayam & Es Kopi', amount: 395000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-09-05', yearMonth: '2026-09' },
+        { id: 404, title: 'Hangout Kafe & Voucher Game', amount: 310000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-09-13', yearMonth: '2026-09' },
+        { id: 405, title: 'Bensin Rutin Mingguan', amount: 150000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-09-08', yearMonth: '2026-09' },
+        { id: 406, title: 'Paket Internet Belajar Unlimited', amount: 105000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-09-02', yearMonth: '2026-09' },
+        { id: 407, title: 'Jilid Laporan & Kertas HVS A4', amount: 165000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-09-17', yearMonth: '2026-09' },
+        { id: 408, title: 'Mouse Wireless untuk Tugas Akhir', amount: 185000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-09-23', yearMonth: '2026-09' },
+        { id: 409, title: 'Iuran Kas Kelas & Sosial', amount: 60000, type: 'EXPENSE', category: 'Lainnya', date: '2026-09-27', yearMonth: '2026-09' },
+
+        // Oktober 2026
+        { id: 501, title: 'Uang Saku Bulanan Oktober', amount: 1650000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-10-01', yearMonth: '2026-10' },
+        { id: 502, title: 'Honor Les Privat Adik Kelas', amount: 450000, type: 'INCOME', category: 'Freelance / Part-time', date: '2026-10-16', yearMonth: '2026-10' },
+        { id: 503, title: 'Kantin Sekolah & Pesan Antar Malam', amount: 455000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-10-06', yearMonth: '2026-10' },
+        { id: 504, title: 'Coffee Shop & Karaoke Akhir Pekan', amount: 480000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-10-18', yearMonth: '2026-10' },
+        { id: 505, title: 'Transportasi Sekolah & Bensin', amount: 165000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-10-09', yearMonth: '2026-10' },
+        { id: 506, title: 'Paket Kuota & Cloud Storage', amount: 120000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-10-03', yearMonth: '2026-10' },
+        { id: 507, title: 'Cetak Revisi Bab 1-3 & Map', amount: 135000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-10-20', yearMonth: '2026-10' },
+        { id: 508, title: 'Tas Ransel & Organizer Meja', amount: 290000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-10-24', yearMonth: '2026-10' },
+        { id: 509, title: 'Donasi Kegiatan Bakti Sosial', amount: 50000, type: 'EXPENSE', category: 'Lainnya', date: '2026-10-28', yearMonth: '2026-10' },
+
+        // November 2026 (Periode Aktif Default)
+        { id: 601, title: 'Uang Saku Bulanan November', amount: 1750000, type: 'INCOME', category: 'Uang Saku Bulanan', date: '2026-11-01', yearMonth: '2026-11' },
+        { id: 602, title: 'Jasa Desain Slide Presentasi', amount: 350000, type: 'INCOME', category: 'Freelance / Part-time', date: '2026-11-08', yearMonth: '2026-11' },
+        { id: 603, title: 'Hadiah Apresiasi dari Kakak', amount: 250000, type: 'INCOME', category: 'Hadiah & Lainnya', date: '2026-11-11', yearMonth: '2026-11' },
+        { id: 604, title: 'Kopi Susu & Nongkrong Bareng Tim', amount: 460000, type: 'EXPENSE', category: 'Nongkrong & Hiburan', date: '2026-11-09', yearMonth: '2026-11' },
+        { id: 605, title: 'Makan Siang Kantin & Jajan Sore', amount: 385000, type: 'EXPENSE', category: 'Makan & Jajan', date: '2026-11-05', yearMonth: '2026-11' },
+        { id: 606, title: 'Checkout Promo 11.11 Marketplace', amount: 320000, type: 'EXPENSE', category: 'Belanja Online & Lifestyle', date: '2026-11-11', yearMonth: '2026-11' },
+        { id: 607, title: 'Cetak & Jilid Hardcover Tugas Akhir', amount: 185000, type: 'EXPENSE', category: 'Kebutuhan Sekolah & Tugas', date: '2026-11-12', yearMonth: '2026-11' },
+        { id: 608, title: 'Isi Bensin Pertalite & Parkir', amount: 150000, type: 'EXPENSE', category: 'Transportasi & Bensin', date: '2026-11-04', yearMonth: '2026-11' },
+        { id: 609, title: 'Paket Kuota Belajar + Musik', amount: 115000, type: 'EXPENSE', category: 'Kuota & Langganan Digital', date: '2026-11-02', yearMonth: '2026-11' },
+        { id: 610, title: 'Potong Rambut & Kebutuhan Harian', amount: 65000, type: 'EXPENSE', category: 'Lainnya', date: '2026-11-13', yearMonth: '2026-11' }
+      ];
+    }
+
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    }
+
+    function loadFromStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          transactions = JSON.parse(raw);
+          return;
+        } catch (err) {
+          console.error('Failed parsing storage:', err);
+        }
+      }
+      transactions = buildSixMonthDemoDataset();
+      saveToStorage();
+    }
+
+    function showToast(message, variant = 'emerald') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        emerald: 'bg-emerald-600 text-white',
+        rose: 'bg-rose-600 text-white',
+        sky: 'bg-sky-600 text-white'
+      };
+      toast.className = `${colors[variant] || colors.emerald} px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    function populateCategoryDropdown() {
+      const select = document.getElementById('txCategory');
+      const list = currentFormType === 'EXPENSE' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+      select.innerHTML = list.map(c => `<option value="${c.name}">${c.name} (${c.tagLabel})</option>`).join('');
+      updateCategoryTag();
+    }
+
+    function updateCategoryTag() {
+      const select = document.getElementById('txCategory');
+      const tag = document.getElementById('categoryNatureTag');
+      const meta = findCategoryMeta(select.value, currentFormType);
+      tag.textContent = meta.tagLabel;
+      if (currentFormType === 'INCOME') {
+        tag.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+      } else if (meta.savable) {
+        tag.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800';
+      } else {
+        tag.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800';
+      }
+    }
+
+    function setTransactionType(type) {
+      currentFormType = type;
+      const btnExp = document.getElementById('btnTypeExpense');
+      const btnInc = document.getElementById('btnTypeIncome');
+      const submitBtn = document.getElementById('submitTxBtn');
+      const submitLabel = document.getElementById('submitTxBtnLabel');
+      const titleInput = document.getElementById('txTitle');
+
+      if (type === 'EXPENSE') {
+        btnExp.className = 'py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-sm';
+        btnInc.className = 'py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900';
+        submitBtn.className = 'w-full py-3 px-4 rounded-xl font-display font-bold text-sm text-white bg-rose-600 hover:bg-rose-700 transition shadow-md shadow-rose-500/20 flex items-center justify-center gap-2';
+        submitLabel.textContent = 'Simpan Pengeluaran';
+        titleInput.placeholder = 'Contoh: Kopi Susu & Camilan Sore';
+      } else {
+        btnInc.className = 'py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm';
+        btnExp.className = 'py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900';
+        submitBtn.className = 'w-full py-3 px-4 rounded-xl font-display font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2';
+        submitLabel.textContent = 'Simpan Pemasukan';
+        titleInput.placeholder = 'Contoh: Uang Saku Bulanan / Beasiswa';
+      }
+      populateCategoryDropdown();
+    }
+
+    function updateAmountPreview(val) {
+      const preview = document.getElementById('amountPreviewText');
+      const num = Number(val) || 0;
+      preview.textContent = `Format: ${formatRupiah(num)}`;
+    }
+
+    function handleMonthChange(newYm) {
+      selectedMonth = newYm;
+      advisorSelectedCategory = null;
+      document.getElementById('monthSelect').value = newYm;
+      const txDateInput = document.getElementById('txDate');
+      if (txDateInput && !txDateInput.value.startsWith(newYm)) {
+        txDateInput.value = `${newYm}-14`;
+      }
+      renderAll();
+    }
+
+    function stepMonth(delta) {
+      const idx = MONTHS_2026.findIndex(m => m.value === selectedMonth);
+      const nextIdx = Math.max(0, Math.min(MONTHS_2026.length - 1, idx + delta));
+      handleMonthChange(MONTHS_2026[nextIdx].value);
+    }
+
+    function handleSliderChange(val) {
+      advisorSliderPercent = parseInt(val, 10) || 30;
+      document.getElementById('sliderValueBadge').textContent = `Potong ${advisorSliderPercent}%`;
+      renderAdvisorAndSummary();
+    }
+
+    function selectAdvisorCategory(catName) {
+      advisorSelectedCategory = catName;
+      renderAdvisorAndSummary();
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('txTitle').value.trim();
+      const amount = parseInt(document.getElementById('txAmount').value, 10) || 0;
+      const date = document.getElementById('txDate').value;
+      const category = document.getElementById('txCategory').value;
+
+      if (!title || amount <= 0 || !date) return;
+
+      const yearMonth = date.substring(0, 7);
+      const newTx = {
+        id: Date.now(),
+        title,
+        amount,
+        type: currentFormType,
+        category,
+        date,
+        yearMonth
+      };
+
+      transactions.unshift(newTx);
+      saveToStorage();
+
+      // Switch to the transaction's month if in list
+      if (MONTHS_2026.some(m => m.value === yearMonth)) {
+        selectedMonth = yearMonth;
+        document.getElementById('monthSelect').value = yearMonth;
+      }
+
+      document.getElementById('txTitle').value = '';
+      document.getElementById('txAmount').value = '';
+      updateAmountPreview(0);
+
+      showToast(`Transaksi "${title}" (${formatRupiah(amount)}) berhasil disimpan!`, currentFormType === 'INCOME' ? 'emerald' : 'rose');
+      renderAll();
+    }
+
+    function deleteTransaction(id) {
+      transactions = transactions.filter(t => t.id !== id);
+      saveToStorage();
+      showToast('Transaksi berhasil dihapus', 'rose');
+      renderAll();
+    }
+
+    function loadDemoData() {
+      transactions = buildSixMonthDemoDataset();
+      selectedMonth = '2026-11';
+      advisorSelectedCategory = null;
+      advisorSliderPercent = 30;
+      document.getElementById('savingSlider').value = 30;
+      document.getElementById('sliderValueBadge').textContent = 'Potong 30%';
+      document.getElementById('monthSelect').value = selectedMonth;
+      saveToStorage();
+      showToast('Data simulasi 6 bulan (Juni–November 2026) berhasil dimuat!', 'emerald');
+      renderAll();
+    }
+
+    function resetAllData() {
+      if (!confirm('Yakin ingin menghapus seluruh data transaksi di semua bulan?')) return;
+      transactions = [];
+      advisorSelectedCategory = null;
+      saveToStorage();
+      showToast('Seluruh data berhasil direset.', 'rose');
+      renderAll();
+    }
+
+    function computeMonthlyStats(ym) {
+      const monthTx = transactions
+        .filter(t => t.yearMonth === ym)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+      const incomes = monthTx.filter(t => t.type === 'INCOME');
+      const expenses = monthTx.filter(t => t.type === 'EXPENSE');
+
+      const totalIncome = incomes.reduce((acc, t) => acc + t.amount, 0);
+      const totalExpense = expenses.reduce((acc, t) => acc + t.amount, 0);
+      const balance = totalIncome - totalExpense;
+      const savingsRate = totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0;
+
+      // Group expenses by category
+      const map = {};
+      expenses.forEach(t => {
+        if (!map[t.category]) {
+          map[t.category] = { amount: 0, count: 0 };
+        }
+        map[t.category].amount += t.amount;
+        map[t.category].count += 1;
+      });
+
+      const breakdown = Object.keys(map)
+        .map(catName => {
+          const meta = findCategoryMeta(catName, 'EXPENSE');
+          const total = map[catName].amount;
+          const pct = totalExpense > 0 ? (total / totalExpense) * 100 : 0;
+          return {
+            meta,
+            category: catName,
+            totalAmount: total,
+            count: map[catName].count,
+            percentage: pct
+          };
+        })
+        .sort((a, b) => b.totalAmount - a.totalAmount);
+
+      return {
+        monthTx,
+        incomes,
+        expenses,
+        totalIncome,
+        totalExpense,
+        balance,
+        savingsRate,
+        breakdown
+      };
+    }
+
+    function renderMonthPills() {
+      const container = document.getElementById('monthPillsContainer');
+      container.innerHTML = MONTHS_2026.map(m => {
+        const active = m.value === selectedMonth;
+        return `<button onclick="handleMonthChange('${m.value}')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+          active
+            ? 'bg-emerald-600 text-white shadow-sm'
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+        }">${m.short}</button>`;
+      }).join('');
+    }
+
+    function renderAdvisorAndSummary() {
+      const stats = computeMonthlyStats(selectedMonth);
+      const periodLabel = getMonthLabel(selectedMonth);
+
+      document.getElementById('printPeriodLabel').textContent = `Periode: ${periodLabel}`;
+      document.getElementById('tableMonthLabel').textContent = periodLabel;
+
+      // Summary Cards
+      document.getElementById('summaryIncome').textContent = formatRupiah(stats.totalIncome);
+      document.getElementById('summaryIncomeCount').textContent = `${stats.incomes.length} transaksi pemasukan`;
+      document.getElementById('summaryIncomeTrend').textContent = `Periode ${periodLabel}`;
+
+      document.getElementById('summaryExpense').textContent = formatRupiah(stats.totalExpense);
+      document.getElementById('summaryExpenseCount').textContent = `${stats.expenses.length} transaksi pengeluaran`;
+      const topCat = stats.breakdown[0];
+      document.getElementById('summaryExpenseTopCat').textContent = topCat
+        ? `Terbesar: ${topCat.category} (${topCat.percentage.toFixed(0)}%)`
+        : 'Terbesar: -';
+
+      document.getElementById('summaryBalance').textContent = formatRupiah(stats.balance);
+      const badge = document.getElementById('summarySavingsBadge');
+      badge.textContent = `Rasio ${stats.savingsRate}%`;
+
+      const bar = document.getElementById('savingsProgressBar');
+      const clampedBar = Math.max(0, Math.min(100, stats.savingsRate));
+      bar.style.width = `${clampedBar}%`;
+
+      const healthEl = document.getElementById('summaryHealthStatus');
+      if (stats.totalIncome === 0 && stats.totalExpense === 0) {
+        healthEl.textContent = 'Status: Belum ada catatan';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600';
+      } else if (stats.savingsRate >= 20) {
+        healthEl.textContent = 'Status: Sehat & Terkendali';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+      } else if (stats.savingsRate >= 0) {
+        healthEl.textContent = 'Status: Waspada (Tabungan Tipis)';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800';
+      } else {
+        healthEl.textContent = 'Status: Defisit (Besar Pasak dari Tiang)';
+        badge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700';
+      }
+
+      // Smart Saving Advisor
+      const topSavable = stats.breakdown.find(b => b.meta.savable) || stats.breakdown[0] || null;
+      const activeTarget = (advisorSelectedCategory && stats.breakdown.find(b => b.category === advisorSelectedCategory)) || topSavable;
+
+      const leakBadge = document.getElementById('advisorTopLeakBadge');
+      const headlineEl = document.getElementById('advisorHeadlineText');
+      const tipEl = document.getElementById('advisorActionTip');
+      const pillsEl = document.getElementById('advisorCategoryPills');
+      const sliderTargetLabel = document.getElementById('sliderTargetCatLabel');
+
+      if (!activeTarget) {
+        leakBadge.textContent = 'Belum Ada Pengeluaran';
+        headlineEl.textContent = 'Belum ada pengeluaran tercatat pada bulan ini.';
+        tipEl.textContent = 'Catat pengeluaranmu atau klik "Muat Demo 6 Bulan" untuk melihat simulasi penghematan pintar.';
+        pillsEl.innerHTML = '';
+        sliderTargetLabel.textContent = '-';
+        document.getElementById('simSavedMonthly').textContent = 'Rp 0';
+        document.getElementById('simSavedSixMonths').textContent = 'Akumulasi 6 Bulan: Rp 0';
+        document.getElementById('simNewBalance').textContent = formatRupiah(stats.balance);
+        document.getElementById('simNewSavingsRate').textContent = `Rasio Tabungan: ${stats.savingsRate}%`;
+        return;
+      }
+
+      leakBadge.textContent = `${topSavable.category} (${formatRupiah(topSavable.totalAmount)} • ${topSavable.percentage.toFixed(1)}%)`;
+      sliderTargetLabel.textContent = activeTarget.category;
+
+      const savedMonthly = Math.round((activeTarget.totalAmount * advisorSliderPercent) / 100);
+      const savedSixMonths = savedMonthly * 6;
+      const newBalance = stats.balance + savedMonthly;
+      const newSavingsRate = stats.totalIncome > 0 ? Math.round((newBalance / stats.totalIncome) * 100) : stats.savingsRate;
+
+      headlineEl.innerHTML = `Potong pengeluaran <span class="text-rose-600 underline decoration-rose-300">${activeTarget.category}</span> sebesar <span class="text-sky-700">${advisorSliderPercent}%</span> untuk menghemat <span class="text-emerald-700">${formatRupiah(savedMonthly)}</span> bulan depan!`;
+      tipEl.textContent = `Strategi Konkret: ${activeTarget.meta.tip}`;
+
+      pillsEl.innerHTML = stats.breakdown.map(item => {
+        const isSelected = item.category === activeTarget.category;
+        return `<button
+          type="button"
+          onclick="selectAdvisorCategory('${item.category.replace(/'/g, "\\'")}')"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+            isSelected
+              ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          }"
+        >
+          <span>${item.category}</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full ${
+            isSelected
+              ? 'bg-white/20 text-white'
+              : item.meta.savable ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+          }">${item.meta.savable ? 'Bisa Dihemat' : 'Pokok'}</span>
+        </button>`;
+      }).join('');
+
+      document.getElementById('simSavedMonthly').textContent = formatRupiah(savedMonthly);
+      document.getElementById('simSavedSixMonths').textContent = `Akumulasi 6 Bulan: ${formatRupiah(savedSixMonths)}`;
+      document.getElementById('simNewBalance').textContent = formatRupiah(newBalance);
+      document.getElementById('simNewSavingsRate').innerHTML = `Rasio Tabungan Naik: <strong>${stats.savingsRate}% &rarr; ${newSavingsRate}%</strong>`;
+    }
+
+    function renderRankedCategoryList() {
+      const stats = computeMonthlyStats(selectedMonth);
+      const container = document.getElementById('rankedCategoryList');
+
+      if (stats.breakdown.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
+            <p class="text-sm font-semibold text-slate-700">Belum Ada Data Pengeluaran Bulan Ini</p>
+            <p class="text-xs text-slate-500 mt-1">Tambahkan transaksi pengeluaran di sebelah kiri untuk melacak porsi uang habis dari mana saja.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = stats.breakdown.map((item, idx) => {
+        const pctFormatted = item.percentage.toFixed(1);
+        return `
+          <div class="p-3.5 rounded-2xl border border-slate-200/90 hover:border-slate-300 transition bg-slate-50/40">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-full text-xs font-extrabold flex items-center justify-center ${
+                  idx === 0 ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
+                }">#${idx + 1}</span>
+                <span class="font-display font-bold text-sm text-slate-900">${item.category}</span>
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                  item.meta.savable
+                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                }">${item.meta.tagLabel}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-display font-bold text-sm text-slate-900">${formatRupiah(item.totalAmount)}</span>
+                <span class="text-xs font-bold text-rose-600 ml-1.5">(${pctFormatted}%)</span>
+              </div>
+            </div>
+            <div class="w-full h-2.5 bg-slate-200/80 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" style="width: ${Math.max(3, item.percentage)}%; background-color: ${item.meta.color}"></div>
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-[11px] text-slate-500">
+              <span>${item.count} transaksi tercatat</span>
+              <span>Simulasi potong 30%: hemat <strong>${formatRupiah(item.totalAmount * 0.3)}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTransactionTable() {
+      const stats = computeMonthlyStats(selectedMonth);
+      const tbody = document.getElementById('transactionTableBody');
+      const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const typeFilter = document.getElementById('typeFilterSelect').value;
+
+      const filtered = stats.monthTx.filter(tx => {
+        const matchesType = typeFilter === 'ALL' || tx.type === typeFilter;
+        const matchesQuery = !query || tx.title.toLowerCase().includes(query) || tx.category.toLowerCase().includes(query);
+        return matchesType && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-10 text-center text-slate-400 text-sm">
+              Tidak ada transaksi yang sesuai pada periode ini.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(tx => {
+        const isExpense = tx.type === 'EXPENSE';
+        const meta = findCategoryMeta(tx.category, tx.type);
+        const sharePct = isExpense && stats.totalExpense > 0
+          ? ((tx.amount / stats.totalExpense) * 100).toFixed(1) + '%'
+          : '-';
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition">
+            <td class="py-3.5 px-4 whitespace-nowrap text-xs font-medium text-slate-600">
+              ${formatDateIndo(tx.date)}
+            </td>
+            <td class="py-3.5 px-4 font-semibold text-slate-900">
+              ${escapeHtml(tx.title)}
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" style="background-color: ${meta.bgLight}; color: ${meta.textDark}">
+                  ${escapeHtml(tx.category)}
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  !isExpense
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : meta.savable
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-slate-100 text-slate-600'
+                }">${meta.tagLabel}</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 text-center text-xs font-semibold ${isExpense ? 'text-rose-600' : 'text-slate-400'}">
+              ${sharePct}
+            </td>
+            <td class="py-3.5 px-4 text-right font-display font-bold whitespace-nowrap ${isExpense ? 'text-rose-600' : 'text-emerald-600'}">
+              ${isExpense ? '-' : '+'}${formatRupiah(tx.amount)}
+            </td>
+            <td class="py-3.5 px-4 text-center no-print">
+              <button
+                onclick="deleteTransaction(${tx.id})"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                title="Hapus Transaksi"
+              >
+                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderCharts() {
+      // 1. Trend Smooth Line / Area Chart
+      const labels = MONTHS_2026.map(m => m.short + ' 2026');
+      const incomeSeries = MONTHS_2026.map(m =>
+        transactions.filter(t => t.yearMonth === m.value && t.type === 'INCOME').reduce((sum, t) => sum + t.amount, 0)
+      );
+      const expenseSeries = MONTHS_2026.map(m =>
+        transactions.filter(t => t.yearMonth === m.value && t.type === 'EXPENSE').reduce((sum, t) => sum + t.amount, 0)
+      );
+
+      const lineCtx = document.getElementById('trendLineChart').getContext('2d');
+      const gradIncome = lineCtx.createLinearGradient(0, 0, 0, 260);
+      gradIncome.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+      gradIncome.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+
+      const gradExpense = lineCtx.createLinearGradient(0, 0, 0, 260);
+      gradExpense.addColorStop(0, 'rgba(244, 63, 94, 0.25)');
+      gradExpense.addColorStop(1, 'rgba(244, 63, 94, 0.02)');
+
+      if (trendChartInstance) trendChartInstance.destroy();
+      trendChartInstance = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Pemasukan (Rp)',
+              data: incomeSeries,
+              borderColor: '#10B981',
+              backgroundColor: gradIncome,
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#059669'
+            },
+            {
+              label: 'Pengeluaran (Rp)',
+              data: expenseSeries,
+              borderColor: '#F43F5E',
+              backgroundColor: gradExpense,
+              borderWidth: 3,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#E11D48'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${formatRupiah(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#F1F5F9' },
+              ticks: {
+                font: { size: 11 },
+                callback: val => 'Rp ' + (val / 1000).toLocaleString('id-ID') + 'rb'
+              }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11, weight: '600' } }
+            }
+          }
+        }
+      });
+
+      // 2. Doughnut Chart for Active Month
+      const stats = computeMonthlyStats(selectedMonth);
+      const emptyOverlay = document.getElementById('doughnutEmptyState');
+      const doughnutCtx = document.getElementById('expenseDoughnutChart').getContext('2d');
+
+      if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+      if (stats.breakdown.length === 0) {
+        emptyOverlay.classList.remove('hidden');
+        return;
+      }
+      emptyOverlay.classList.add('hidden');
+
+      doughnutChartInstance = new Chart(doughnutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: stats.breakdown.map(b => b.category),
+          datasets: [{
+            data: stats.breakdown.map(b => b.totalAmount),
+            backgroundColor: stats.breakdown.map(b => b.meta.color),
+            borderColor: '#FFFFFF',
+            borderWidth: 3,
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '64%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 12,
+                font: { size: 11, family: 'Plus Jakarta Sans' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const val = ctx.parsed;
+                  const pct = stats.totalExpense > 0 ? ((val / stats.totalExpense) * 100).toFixed(1) : 0;
+                  return `${ctx.label}: ${formatRupiah(val)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // 5A. Export Excel / CSV (UTF-8 with BOM)
+    function exportToExcelCSV() {
+      const stats = computeMonthlyStats(selectedMonth);
+      const periodName = getMonthLabel(selectedMonth);
+
+      const rows = [
+        ['LAPORAN KEUANGAN FINSMART EDU (TUGAS AKHIR SEKOLAH)'],
+        ['Periode Bulan', periodName],
+        ['Total Pemasukan', stats.totalIncome],
+        ['Total Pengeluaran', stats.totalExpense],
+        ['Sisa Saldo / Tabungan', stats.balance],
+        ['Rasio Tabungan (%)', `${stats.savingsRate}%`],
+        [],
+        ['No', 'Tanggal', 'Periode Bulan', 'Jenis Transaksi', 'Kategori', 'Sifat Kategori', 'Keterangan Transaksi', 'Nominal (Rp)', 'Porsi Pengeluaran (%)']
+      ];
+
+      stats.monthTx.forEach((tx, idx) => {
+        const meta = findCategoryMeta(tx.category, tx.type);
+        const pct = tx.type === 'EXPENSE' && stats.totalExpense > 0
+          ? ((tx.amount / stats.totalExpense) * 100).toFixed(1) + '%'
+          : '-';
+        rows.push([
+          idx + 1,
+          tx.date,
+          tx.yearMonth,
+          tx.type === 'INCOME' ? 'Pemasukan' : 'Pengeluaran',
+          tx.category,
+          meta.tagLabel,
+          tx.title,
+          tx.amount,
+          pct
+        ]);
+      });
+
+      const csvContent = '\uFEFF' + rows.map(r =>
+        r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\r\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Laporan_FinSmart_Edu_${selectedMonth}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast(`File Excel/CSV periode ${periodName} berhasil diunduh!`, 'sky');
+    }
+
+    // 5B. Cetak / Simpan PDF
+    function printReportPDF() {
+      const now = new Date();
+      document.getElementById('printTimestamp').textContent = 'Dicetak pada: ' + now.toLocaleString('id-ID');
+      window.print();
+    }
+
+    // 5C. Unduh File Web Standalone (.html)
+    function downloadStandaloneHTML() {
+      const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'FinSmart_Edu_Tugas_Akhir.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('File HTML lengkap berhasil diunduh!', 'emerald');
+    }
+
+    function renderAll() {
+      renderMonthPills();
+      renderAdvisorAndSummary();
+      renderRankedCategoryList();
+      renderTransactionTable();
+      renderCharts();
+    }
+
+    // Initialize Application on DOM Ready
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+      setTransactionType('EXPENSE');
+      renderAll();
+    });
+  </script>
+</body>
+</html>

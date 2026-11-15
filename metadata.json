@@ -1,0 +1,6 @@
+{
+  "name": "FinSmart Edu",
+  "description": "Aplikasi pencatat keuangan pintar dengan pelacak pengeluaran bulanan, kurva tren interaktif, saran hemat cerdas, asisten AI Gemini, dan pembuat visual target tabungan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
